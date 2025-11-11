@@ -1,5 +1,5 @@
 For RU course "Testing Techniques", we copied the python implementation of the generic adapter module from https://github.com/Axini/smartdoor-adapter-python.
-We implemented an adapter to the Client-Server API of our System Under Test, a local Synapse matrix home server.
+We implemented an adapter for the mock Matrix client linked to our System Under Test, a local Synapse matrix home server.
 This adapter connects to the Axini model-based testing platform via a websocket.
 This allows an AML model to generate and execute tests on our SUT.
 
