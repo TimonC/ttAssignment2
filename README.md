@@ -3,8 +3,8 @@ We implemented an adapter for the mock Matrix client linked to our System Under 
 This adapter connects to the Axini model-based testing platform via a websocket.
 This allows an AML model to generate and execute tests on our SUT.
 
-We also simply copied the code for the first assignment, for convenience to import it as a module. 
-Check  https://github.com/TimonC/ttAssignment1 for the setup, a Linux environment with Bash, Docker and Python is required.
+We also simply copied the code for the first assignment, for convenience to import the mock client as a module. 
+Check https://github.com/TimonC/ttAssignment1 for the setup of the local Synapse homeservers, a Linux environment with Bash, Docker and Python is required.
 
 For the adapter, we have a bash script to help setup the virtual environment (./setup.sh), but these commands can also be run directly without a shell script.
 Therefore, the only requirements for launching the adapter are Python, as well as that the Synapse homeservers are exposed on the same host.
