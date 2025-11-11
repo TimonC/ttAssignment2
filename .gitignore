@@ -7,6 +7,8 @@ requirements.txt
 setup.py
 src/adapter/smartdoor
 start_adapter.txt
+tests/
+docs/
 
 __pycache__/
 
