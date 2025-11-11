@@ -1,0 +1,17 @@
+   > registration test 1 passed (non-string input)
+   > registration test 2 passed (valid username)
+   > registration test 3 passed (invalid character)
+   > registration test 4 passed (empty username)
+   > registration test 5 passed (None as username)
+   > registration test 6 passed (too long username)
+All 6 registration API tests passed!
+
+   > login test 1 passed (non-string input)
+   > login test 2 passed (valid user)
+   > login test 3 passed (unregistered user)
+   > login test 4 passed (None as username)
+All 4 login API tests passed!
+
+  > messaging test 1 passed (user1→user2)
+  > messaging test 2 passed (user2→user1)
+All messaging tests passed!
