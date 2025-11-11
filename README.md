@@ -16,5 +16,5 @@ chmod +x setup.sh
 ./setup.sh
 source venv/bin/activate
 export PYTHONPATH="$PYTHONPATH:~/ttAssignment2/src"                                                                                                                              
-python3 src/adapter/plugin_adapter.py   -u $AXINI_ARI   -t "$group10_API_KEY"   -n MockClientAdapter
+python3 src/adapter/plugin_adapter.py   -u $AXINI_ENDPOINT   -t $group10_API_KEY   -n MockClientAdapter
 ```
