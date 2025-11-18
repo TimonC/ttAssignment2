@@ -55,5 +55,5 @@ EOF"
 }
 
 setup_synapse_homeserver 8008 1
-setup_synapse_homeserver 8009 2
+# setup_synapse_homeserver 8009 2
 
