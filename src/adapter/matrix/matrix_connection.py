@@ -71,6 +71,14 @@ class MatrixConnection:
 
     def stop(self):
         """
-        Clean-up if needed. Currently, just logs since no persistent WS connection exists.
+        Clean-up if needed. Clears handler state to avoid test contamination.
         """
-        logging.info("Stopping MatrixConnection. Nothing to clean up.")
+        logging.info("Stopping MatrixConnection")
+        if hasattr(self.handler, 'access_token'):
+            self.handler.access_token = None
+        if hasattr(self.handler, 'room_id'):
+            self.handler.room_id = None
+        if hasattr(self.handler, 'handler_state'):
+            self.handler.handler_state = None
+
+        logging.info("MatrixConnection stopped cleanly")
