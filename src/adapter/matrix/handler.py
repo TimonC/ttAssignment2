@@ -10,7 +10,7 @@ from generic.api.parameter import Type, Parameter
 from generic.handler import Handler as AbstractHandler
 from matrix.matrix_connection import MatrixConnection
 
-from ttAssignment1 import login_user, logout_user, send_message
+from src.ttAssignment1 import login_user, logout_user, send_message
 
 def _response(name, channel='synapse', parameters=None):
     """ Helper method to create a response Label. """
