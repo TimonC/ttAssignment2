@@ -158,7 +158,7 @@ class Handler(AbstractHandler):
                 name='endpoint',
                 tipe=Type.STRING,
                 description='Base URL for the Matrix API',
-                value='ws://localhost:8008'
+                value = 'http://localhost:8008'
             ),
         ])
 

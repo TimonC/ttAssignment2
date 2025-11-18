@@ -1,129 +1,76 @@
 import logging
 import threading
-import websocket
-import http.client
-import time
 import subprocess
-
-HOST = "localhost"
 
 class MatrixConnection:
     """
-    This class handles the connection, sending and receiving of messages to the SmartDoor SUT
+    Handles the Matrix SUT via HTTP calls (Synapse homeservers) and exposes
+    a clean interface to the Handler for sending stimuli and receiving responses.
     """
 
     def __init__(self, handler, endpoint):
         self.handler = handler
         self.endpoint = endpoint
-        self.websocket = None
-        self.wst = None
+        self.reset_lock = threading.Lock()
 
     def connect(self):
         """
-        Connect to the SmartDoor SUT.
+        Prepare the SUT (rebuild homeservers) and signal ready.
         """
-        logging.info('Connecting to Matrix')
-        self.websocket = websocket.WebSocketApp(
-            self.endpoint,
-            on_open=lambda _: self.on_open(),
-            on_close=lambda _, close_status_code, close_msg: self.on_close(),
-            on_message=lambda _, msg: self.on_message(msg),
-            on_error=lambda _, msg: self.on_error(msg)
-        )
-        self.wst = threading.Thread(target=self.websocket.run_forever)
-        self.wst.daemon = True
-        self.wst.start()
-
-    def _wait_for_synapse_ready(self, ports=(8008, 8009), timeout=30):
-        """
-        Wait for Synapse to be responsive by checking health endpoint.
-        """
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            try:
-                conn = http.client.HTTPConnection(HOST, ports[0], timeout=5)
-                conn.request("GET", "/health")
-                resp1 = conn.getresponse().status
-                conn.close()
-
-                conn = http.client.HTTPConnection(HOST, ports[1], timeout=5)
-                conn.request("GET", "/health")
-                resp2 = conn.getresponse().status
-                conn.close()
-
-                if resp1 == 200 and resp2 == 200:
-                    logging.info('Synapse is ready')
-                    return
-            except (ConnectionRefusedError, TimeoutError, OSError):
-                pass
-            time.sleep(1)
-        raise Exception(f"Synapse failed to start within {timeout} seconds")
+        logging.info("Connecting to Matrix SUT")
+        try:
+            self._rebuild_synapse_homeservers()
+            self.handler.send_message_to_amp("RESET_PERFORMED")
+            logging.info("Matrix SUT ready")
+        except Exception as e:
+            logging.error(f"Failed to connect to Matrix SUT: {e}")
+            self.handler.send_message_to_amp("RESET_FAILED")
 
     def _rebuild_synapse_homeservers(self):
         """
-        Rebuild Synapse homeserver using the setup script.
+        Rebuild the Synapse homeservers via the setup script.
+        Thread-safe to allow concurrent RESET calls.
         """
-        logging.info('Rebuilding Synapse')
-        subprocess.run(["../ttAssignment1/setup_homeserver.sh"], check=True)
-        self._wait_for_synapse_ready()
+        with self.reset_lock:
+            logging.info("Rebuilding Synapse homeservers")
+            try:
+                subprocess.run(["src/ttAssignment1/setup_homeservers.sh"], check=True)
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError(f"Setup script failed: {e}")
 
-    def send(self, message):
+    def send(self, message: str):
         """
-        Send a message to the SUT.
+        Send a message/stimulus to the SUT.
+        If 'RESET', rebuild homeservers asynchronously.
+        Otherwise, directly send it to the handler via HTTP.
         """
-        if message == 'RESET':
-            logging.debug('RESET received, rebuilding Synapse')
+        if message.upper() == "RESET":
+            logging.info("RESET received: rebuilding Synapse")
             reset_thread = threading.Thread(target=self._handle_reset)
             reset_thread.daemon = True
             reset_thread.start()
         else:
-            logging.debug(f'Sending message to SUT: {message}')
-            self.websocket.send(message)
+            # This triggers your Handler's logic: convert message → HTTP → Synapse
+            try:
+                logging.debug(f"Sending message to SUT: {message}")
+                self.handler.send_message_to_amp(message)
+            except Exception as e:
+                logging.error(f"Failed to send message to SUT: {e}")
 
     def _handle_reset(self):
         """
-        Handle RESET through a mock script.
+        Thread-safe RESET handling.
         """
         try:
             self._rebuild_synapse_homeservers()
-            self.handler.send_message_to_amp('RESET_PERFORMED')
-            logging.info('Reset completed successfully')
+            self.handler.send_message_to_amp("RESET_PERFORMED")
+            logging.info("RESET completed successfully")
         except Exception as e:
-            logging.error(f"Reset failed: {e}")
-            self.handler.send_message_to_amp('RESET_FAILED')
-
-    def on_open(self):
-        """
-        Callback that is called when the socket to the SUT is opened.
-        """
-        logging.info('Connected to SUT')
-        self.send('RESET')
-
-    def on_close(self):
-        """
-        Callback that is called when the socket is closed.
-        """
-        logging.debug('Closed connection to SUT')
-
-    def on_message(self, msg):
-        """
-        Callback that is called when the SUT sends a message.
-        """
-        logging.debug(f'Received message from SUT: {msg}')
-        self.handler.send_message_to_amp(msg)
-
-    def on_error(self, msg):
-        """
-        Callback that is called when something is wrong with the websocket connection
-        """
-        logging.error(f"Error with connection to SUT: {msg}")
+            logging.error(f"RESET failed: {e}")
+            self.handler.send_message_to_amp("RESET_FAILED")
 
     def stop(self):
         """
-        Perform any cleanup if the SUT is closed.
+        Clean-up if needed. Currently, just logs since no persistent WS connection exists.
         """
-        if self.websocket:
-            self.websocket.close()
-            self.websocket.keep_running = False
-            self.wst.join()
-            self.wst = None
+        logging.info("Stopping MatrixConnection. Nothing to clean up.")
