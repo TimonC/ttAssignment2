@@ -1,20 +1,20 @@
 import logging
 import threading
 import websocket
+import http.client
+import time
+import subprocess
+
+HOST = "localhost"
 
 class MatrixConnection:
     """
     This class handles the connection, sending and receiving of messages to the SmartDoor SUT
-
-    Attributes:
-        handler (adapter.smartdoor.Handler)
-        endpoint (str): URL of the SmartDoor SUT
     """
 
     def __init__(self, handler, endpoint):
         self.handler = handler
         self.endpoint = endpoint
-
         self.websocket = None
         self.wst = None
 
@@ -23,8 +23,6 @@ class MatrixConnection:
         Connect to the SmartDoor SUT.
         """
         logging.info('Connecting to Matrix')
-
-        # Use lambda functions to correctly pass the self variable.
         self.websocket = websocket.WebSocketApp(
             self.endpoint,
             on_open=lambda _: self.on_open(),
@@ -32,21 +30,61 @@ class MatrixConnection:
             on_message=lambda _, msg: self.on_message(msg),
             on_error=lambda _, msg: self.on_error(msg)
         )
-
         self.wst = threading.Thread(target=self.websocket.run_forever)
         self.wst.daemon = True
         self.wst.start()
 
+    def _wait_for_synapse_ready(self, port=8008, timeout=30):
+        """
+        Wait for Synapse to be responsive by checking health endpoint.
+        """
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            try:
+                conn = http.client.HTTPConnection(HOST, port, timeout=5)
+                conn.request("GET", "/health")
+                if conn.getresponse().status == 200:
+                    logging.info('Synapse is ready')
+                    conn.close()
+                    return
+                conn.close()
+            except (ConnectionRefusedError, TimeoutError, OSError):
+                pass
+            time.sleep(1)
+        raise Exception(f"Synapse failed to start within {timeout} seconds")
+
+    def _rebuild_synapse(self):
+        """
+        Rebuild Synapse homeserver using the setup script.
+        """
+        logging.info('Rebuilding Synapse')
+        subprocess.run(["../ttAssignment1/setup_homeserver.sh"], check=True)
+        self._wait_for_synapse_ready()
+
     def send(self, message):
         """
         Send a message to the SUT.
-
-        Args:
-            message (str): Message to send
         """
-        logging.debug('Sending message to SUT: {msg}'.format(msg=message))
+        if message == 'RESET':
+            logging.debug('RESET received, rebuilding Synapse')
+            reset_thread = threading.Thread(target=self._handle_reset)
+            reset_thread.daemon = True
+            reset_thread.start()
+        else:
+            logging.debug(f'Sending message to SUT: {message}')
+            self.websocket.send(message)
 
-        self.websocket.send(message)
+    def _handle_reset(self):
+        """
+        Handle RESET through a mock script.
+        """
+        try:
+            self._rebuild_synapse()
+            self.handler.send_message_to_amp('RESET_PERFORMED')
+            logging.info('Reset completed successfully')
+        except Exception as e:
+            logging.error(f"Reset failed: {e}")
+            self.handler.send_message_to_amp('RESET_FAILED')
 
     def on_open(self):
         """
@@ -64,21 +102,15 @@ class MatrixConnection:
     def on_message(self, msg):
         """
         Callback that is called when the SUT sends a message.
-
-        Args:
-            msg (str): Message of the SmartDoor SUT
         """
-        logging.debug('Received message from SUT: {msg}'.format(msg=msg))
+        logging.debug(f'Received message from SUT: {msg}')
         self.handler.send_message_to_amp(msg)
 
     def on_error(self, msg):
         """
         Callback that is called when something is wrong with the websocket connection
-
-        Args:
-            msg (str): Error message
         """
-        logging.error("Error with connection to SUT: {e}".format(e=msg))
+        logging.error(f"Error with connection to SUT: {msg}")
 
     def stop(self):
         """
@@ -86,8 +118,6 @@ class MatrixConnection:
         """
         if self.websocket:
             self.websocket.close()
-            logging.debug('Stopping thread which handles WebSocket connection with SUT')
             self.websocket.keep_running = False
             self.wst.join()
-            logging.debug('Thread stopped')
             self.wst = None
