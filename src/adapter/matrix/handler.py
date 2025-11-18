@@ -10,7 +10,7 @@ from generic.api.parameter import Type, Parameter
 from generic.handler import Handler as AbstractHandler
 from matrix.matrix_connection import MatrixConnection
 
-from src.ttAssignment1 import login_user, logout_user, send_message
+from ttAssignment1 import login_user, logout_user, send_message, register_user, create_room, join_room, invite_user
 
 def _response(name, channel='synapse', parameters=None):
     """ Helper method to create a response Label. """
@@ -30,21 +30,52 @@ class Handler(AbstractHandler):
         self.sut = None
         self.adapter_core = None
 
+
     def send_message_to_amp(self, raw_message: str):
         """
         Send a message back to AMP. The message from the SUT needs to be converted to a Label.
-
-        Args:
-            raw_message (str): The message to send to AMP.
         """
         logging.debug('response received: {label}'.format(label=raw_message))
 
         if raw_message == 'RESET_PERFORMED':
-            # After 'RESET_PERFORMED', the SUT is ready for a new test case.
-            self.adapter_core.send_ready()
+            # After 'RESET_PERFORMED', initialize test environment and then signal ready
+            try:
+                self._initialize_test_environment()
+                logging.info('Test environment initialized successfully')
+            except Exception as e:
+                logging.error(f"Test environment initialization failed: {e}")
+                # You might want to send a different signal here for failure
+            finally:
+                # Signal AMP that we're ready for the next test case
+                self.adapter_core.send_ready()
         else:
             label = self._message2label(raw_message)
             self.adapter_core.send_response(label)
+
+    def _initialize_test_environment(self):
+        """
+        Initialize test users and room after reset.
+        """
+        try:
+            # Register two test users
+            status, user1 = register_user(8008, "Alice", "alice123")
+            assert status == 200, f"User1 registration failed: {status}"
+            status, user2 = register_user(8009, "Bob", "bob123")
+            assert status == 200, f"User2 registration failed: {status}"
+
+            # User2 creates room and invites user1
+            status, room = create_room(8009, user2["access_token"], name="group10_test_room")
+            room_id = room["room_id"]
+            invite_user(8009, user2["access_token"], room_id, user1["user_id"])
+            join_room(8008, user1["access_token"], room_id)
+
+            assert status == 200, f"Room creation failed: {status}"
+
+            logging.info(f'Test environment initialized: users registered, room created: {room["room_id"]}')
+
+        except Exception as e:
+            logging.error(f"Failed to initialize test environment: {e}")
+            raise
 
     def start(self):
         """
