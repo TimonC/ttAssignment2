@@ -1,6 +1,6 @@
 import logging
 import time
-
+import http.client
 from datetime import datetime
 
 from generic.api import label_pb2
@@ -40,6 +40,8 @@ class Handler(AbstractHandler):
         if raw_message == 'RESET_PERFORMED':
             # After 'RESET_PERFORMED', initialize test environment and then signal ready
             try:
+                self._wait_for_synapse(8008)
+                self._wait_for_synapse(8009)
                 self._initialize_test_environment()
                 logging.info('Test environment initialized successfully')
             except Exception as e:
@@ -51,6 +53,24 @@ class Handler(AbstractHandler):
         else:
             label = self._message2label(raw_message)
             self.adapter_core.send_response(label)
+
+    def _wait_for_synapse(self, port, timeout=15):
+        """
+        Wait until the Synapse server at localhost:port responds to HTTP requests.
+        """
+        start = time.time()
+        while True:
+            try:
+                conn = http.client.HTTPConnection("localhost", port, timeout=2)
+                conn.request("GET", "/_matrix/client/versions")
+                res = conn.getresponse()
+                if res.status == 200:
+                    return True
+            except Exception:
+                pass
+            if time.time() - start > timeout:
+                raise RuntimeError(f"Synapse at port {port} did not become ready within {timeout}s")
+            time.sleep(0.5)
 
     def _initialize_test_environment(self):
         """
@@ -153,11 +173,16 @@ class Handler(AbstractHandler):
         ]
 
     def default_configuration(self) -> Configuration:
-        return Configuration([
-            ConfigurationItem(
-                name='endpoint',
-                tipe=Type.STRING,
-                description='Base URL for the Matrix API',
+        """
+        The default configuration of this adapter.
+
+        Returns:
+            Configuration: the default configuration required by this adapter.
+        """
+        return Configuration([ConfigurationItem(\
+            name='endpoint',
+            tipe=Type.STRING,
+            description='Base websocket URL of the mock client for the Client-Server Matrix API',
                 value = 'http://localhost:8008'
             ),
         ])
