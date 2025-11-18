@@ -34,16 +34,22 @@ class MatrixConnection:
         self.wst.daemon = True
         self.wst.start()
 
-    def _wait_for_synapse_ready(self, port=8008, timeout=30):
+    def _wait_for_synapse_ready(self, ports=(8008, 8009), timeout=30):
         """
         Wait for Synapse to be responsive by checking health endpoint.
         """
         start_time = time.time()
         while time.time() - start_time < timeout:
             try:
-                conn = http.client.HTTPConnection(HOST, port, timeout=5)
+                conn = http.client.HTTPConnection(HOST, ports[0], timeout=5)
                 conn.request("GET", "/health")
-                if conn.getresponse().status == 200:
+                resp1 = conn.getresponse().status
+
+                conn = http.client.HTTPConnection(HOST, ports[1], timeout=5)
+                conn.request("GET", "/health")
+                resp2 = conn.getresponse().status
+
+                if resp1 == 200 and resp2 == 200:
                     logging.info('Synapse is ready')
                     conn.close()
                     return
@@ -53,7 +59,7 @@ class MatrixConnection:
             time.sleep(1)
         raise Exception(f"Synapse failed to start within {timeout} seconds")
 
-    def _rebuild_synapse(self):
+    def _rebuild_synapse_homeservers(self):
         """
         Rebuild Synapse homeserver using the setup script.
         """
@@ -79,7 +85,7 @@ class MatrixConnection:
         Handle RESET through a mock script.
         """
         try:
-            self._rebuild_synapse()
+            self._rebuild_synapse_homeservers()
             self.handler.send_message_to_amp('RESET_PERFORMED')
             logging.info('Reset completed successfully')
         except Exception as e:
