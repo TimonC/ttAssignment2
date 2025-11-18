@@ -90,7 +90,6 @@ class Handler(AbstractHandler):
         Prepare the SUT for the next test case.
         """
         logging.info('Resetting the SUT for a new test case')
-        # Just send RESET to MatrixConnection - it handles the actual reset
         self.sut.send('RESET')
 
     def stop(self):
