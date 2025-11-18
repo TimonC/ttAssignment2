@@ -127,7 +127,6 @@ class Handler(AbstractHandler):
         The labels supported by the adapter.
         """
         return [
-            # Stimuli
             _stimulus('login', parameters=[
                 Parameter('username', Type.STRING),
                 Parameter('password', Type.STRING)
@@ -140,8 +139,8 @@ class Handler(AbstractHandler):
                 Parameter('room_id', Type.STRING),
                 Parameter('message', Type.STRING)
             ]),
+            _stimulus('reset'),
 
-            # Responses
             _response('logged_in'),
             _response('logged_out'),
             _response('message_sent'),
@@ -150,6 +149,7 @@ class Handler(AbstractHandler):
             _response('invalid_username'),
             _response('invalid_password'),
             _response('incorrect_password'),
+            _response('shut_off'),
         ]
 
     def default_configuration(self) -> Configuration:
@@ -158,7 +158,7 @@ class Handler(AbstractHandler):
                 name='endpoint',
                 tipe=Type.STRING,
                 description='Base URL for the Matrix API',
-                value='http://localhost:8008'
+                value='ws://localhost:8008'
             ),
         ])
 

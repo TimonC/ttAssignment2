@@ -44,16 +44,16 @@ class MatrixConnection:
                 conn = http.client.HTTPConnection(HOST, ports[0], timeout=5)
                 conn.request("GET", "/health")
                 resp1 = conn.getresponse().status
+                conn.close()
 
                 conn = http.client.HTTPConnection(HOST, ports[1], timeout=5)
                 conn.request("GET", "/health")
                 resp2 = conn.getresponse().status
+                conn.close()
 
                 if resp1 == 200 and resp2 == 200:
                     logging.info('Synapse is ready')
-                    conn.close()
                     return
-                conn.close()
             except (ConnectionRefusedError, TimeoutError, OSError):
                 pass
             time.sleep(1)
