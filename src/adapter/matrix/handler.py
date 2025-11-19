@@ -10,7 +10,7 @@ from generic.api.parameter import Type, Parameter
 from generic.handler import Handler as AbstractHandler
 from matrix.matrix_connection import MatrixConnection
 
-from ttAssignment1 import login_user, logout_user, send_message, register_user, create_room, join_room, invite_user
+from ttAssignment1 import login_user, logout_user, register_user
 
 def _response(name, channel='synapse', parameters=None):
     """ Helper method to create a response Label. """
@@ -147,6 +147,10 @@ class Handler(AbstractHandler):
         The labels supported by the adapter.
         """
         return [
+            _stimulus('register', parameters=[
+                Parameter('username', Type.STRING),
+                Parameter('password', Type.STRING)
+            ]),
             _stimulus('login', parameters=[
                 Parameter('username', Type.STRING),
                 Parameter('password', Type.STRING)
@@ -154,16 +158,17 @@ class Handler(AbstractHandler):
             _stimulus('logout', parameters=[
                 Parameter('session_token', Type.STRING)
             ]),
-            _stimulus('send_message', parameters=[
-                Parameter('session_token', Type.STRING),
-                Parameter('room_id', Type.STRING),
-                Parameter('message', Type.STRING)
-            ]),
+            # _stimulus('send_message', parameters=[
+            #     Parameter('session_token', Type.STRING),
+            #     Parameter('room_id', Type.STRING),
+            #     Parameter('message', Type.STRING)
+            # ]),
             _stimulus('reset'),
 
+            _response('user_registered'),
             _response('logged_in'),
             _response('logged_out'),
-            _response('message_sent'),
+            # _response('message_sent'),
             _response('invalid_command'),
             _response('invalid_token'),
             _response('invalid_username'),
@@ -223,16 +228,18 @@ class Handler(AbstractHandler):
             else:
                 return "INVALID_TOKEN"
 
-        elif label.name == 'send_message':
-            token = label.parameters[0].value
-            room_id = label.parameters[1].value
-            message = label.parameters[2].value
+        elif label.name == 'register':
+            username = label.parameters[0].value
+            password = label.parameters[1].value
+            status, _ = register_user(port, username, password)
+            if status == 200:
+                return "USER_REGISTERED"
+            elif status == 403:
+                return "INCORRECT_PASSWORD"
+            else:
+                return "INVALID_PASSWORD"
 
-            if not token:
-                return "INVALID_TOKEN"
 
-            status, _ = send_message(port, token, room_id, message)
-            return "MESSAGE_SENT" if status == 200 else "INVALID_TOKEN"
 
         else:
             return "INVALID_COMMAND"
