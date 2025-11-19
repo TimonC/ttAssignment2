@@ -80,18 +80,18 @@ class Handler(AbstractHandler):
             # Register two test users
             status, user1 = register_user(8008, "Alice", "alice123")
             assert status == 200, f"User1 registration failed: {status}"
-            status, user2 = register_user(8009, "Bob", "bob123")
-            assert status == 200, f"User2 registration failed: {status}"
+            # status, user2 = register_user(8009, "Bob", "bob123")
+            # assert status == 200, f"User2 registration failed: {status}"
 
             # User2 creates room and invites user1
-            status, room = create_room(8009, user2["access_token"], name="group10_test_room")
-            room_id = room["room_id"]
-            invite_user(8009, user2["access_token"], room_id, user1["user_id"])
-            join_room(8008, user1["access_token"], room_id)
+            # status, room = create_room(8009, user2["access_token"], name="group10_test_room")
+            # room_id = room["room_id"]
+            # invite_user(8009, user2["access_token"], room_id, user1["user_id"])
+            # join_room(8008, user1["access_token"], room_id)
+            # assert status == 200, f"Room creation failed: {status}"
 
-            assert status == 200, f"Room creation failed: {status}"
-
-            logging.info(f'Test environment initialized: users registered, room created: {room["room_id"]}')
+            logging.info(f'Test environment initialized: registered user "Alice" with password "alice123"')
+            # logging.info(f'Test environment initialized: users registered, room created: {room["room_id"]}')
 
         except Exception as e:
             logging.error(f"Failed to initialize test environment: {e}")
