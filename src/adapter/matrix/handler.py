@@ -25,7 +25,6 @@ class Handler(AbstractHandler):
 
         if raw_message == 'RESET_PERFORMED':
             self._wait_for_synapse(8008)
-            self._initialize_test_environment()
             self.adapter_core.send_ready()
         else:
             label = self._message2label(raw_message, parameters)
@@ -42,11 +41,6 @@ class Handler(AbstractHandler):
             if time.time() - start > timeout:
                 raise RuntimeError(f"Synapse timeout")
             time.sleep(0.5)
-
-    def _initialize_test_environment(self):
-        status, user1 = register_user(8008, "Alice", "alice123")
-        assert status == 200
-        logging.info('Test environment initialized: Alice registered')
 
     def start(self):
         logging.info("Starting Handler")
