@@ -26,7 +26,8 @@ class Handler(AbstractHandler):
 
         if raw_message == 'RESET_PERFORMED':
             self._wait_for_synapse(PORT)
-            register_user(PORT, "Alice", "alice123")
+            status, _ = register_user(PORT, "Alice", "alice123")
+            assert status==200
             self.adapter_core.send_ready()
         else:
             label = self._message2label(raw_message, parameters)
