@@ -26,6 +26,7 @@ class Handler(AbstractHandler):
 
         if raw_message == 'RESET_PERFORMED':
             self._wait_for_synapse(PORT)
+            register_user(PORT, "Alice", "alice123")
             self.adapter_core.send_ready()
         else:
             label = self._message2label(raw_message, parameters)
@@ -67,14 +68,14 @@ class Handler(AbstractHandler):
 
     def stimulate(self, pb_label: label_pb2.Label):
         label = Label.decode(pb_label)
-        sut_msg = self._label2message(label)
+        sut_msg, response_parameters= self._label2message(label)
 
         pb_label.timestamp = time.time_ns()
         pb_label.physical_label = bytes(sut_msg, 'UTF-8')
         self.adapter_core.send_stimulus_confirmation(pb_label)
 
         logging.info(f'Injecting stimulus @SUT: {label.name}')
-        self.send_message_to_amp(sut_msg)
+        self.send_message_to_amp(sut_msg, parameters=response_parameters)
 
     def supported_labels(self):
         return [
@@ -110,31 +111,41 @@ class Handler(AbstractHandler):
             value='http://localhost:8008'
         )])
 
-    def _label2message(self, label: Label) -> str:
+    def _label2message(self, label: Label) -> tuple:
+        """Returns (message_string, parameters_list)"""
+
         if label.name == 'login':
             username = label.parameters[0].value
             password = label.parameters[1].value
             status, response = login_user(PORT, username, password)
 
             if status == 200 and "access_token" in response:
-                return "LOGGED_IN"
+                token = response["access_token"]
+                # Return both message and parameters for logged_in response
+                return "logged_in", [Parameter('session_token', Type.STRING, token)]
             elif status == 403:
-                return "INCORRECT_PASSWORD"
+                return "incorrect_login", None
             else:
-                return "INVALID_LOGIN"
+                return "invalid_login", None
 
         elif label.name == 'logout':
             token = label.parameters[0].value
             status, _ = logout_user(PORT, token)
-            return "LOGGED_OUT" if status == 200 else "INVALID_LOGOUT"
+            if status == 200:
+                return "logged_out", None
+            else:
+                return "invalid_logout", None
 
         elif label.name == 'register':
             username = label.parameters[0].value
             password = label.parameters[1].value
             status, _ = register_user(PORT, username, password)
-            return "USER_REGISTERED" if status == 200 else "INVALID_REGISTER"
+            if status == 200:
+                return "user_registered", None
+            else:
+                return "invalid_register", None
 
-        return "INVALID_COMMAND"
+        return "shut_off", None
 
     def _message2label(self, message: str, parameters=None):
         return Label(
