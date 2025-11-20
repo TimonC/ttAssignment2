@@ -65,7 +65,7 @@ class Handler(AbstractHandler):
 
     def _rebuild_synapse(self):
         logging.info("Rebuilding Synapse")
-        subprocess.run(["src/ttAssignment1/setup_homeservers.sh"], check=True)
+        subprocess.run(["src/ttAssignment1/setup_homeserver.sh"], check=True)
 
     def stop(self):
         logging.info('Stopping Handler')
