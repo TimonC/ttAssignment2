@@ -41,7 +41,6 @@ class Handler(AbstractHandler):
             # After 'RESET_PERFORMED', initialize test environment and then signal ready
             try:
                 self._wait_for_synapse(8008)
-                self._wait_for_synapse(8009)
                 self._initialize_test_environment()
                 logging.info('Test environment initialized successfully')
             except Exception as e:
