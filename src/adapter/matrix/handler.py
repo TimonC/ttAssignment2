@@ -13,7 +13,7 @@ from generic.handler import Handler as AbstractHandler
 
 from ttAssignment1 import login_user, logout_user, register_user
 
-
+PORT = 8008
 class Handler(AbstractHandler):
 
     def __init__(self):
@@ -116,13 +116,10 @@ class Handler(AbstractHandler):
         )])
 
     def _label2message(self, label: Label) -> str:
-        host = self.configuration.items[0].value
-        port = int(str(host)[-4:])
-
         if label.name == 'login':
             username = label.parameters[0].value
             password = label.parameters[1].value
-            status, response = login_user(port, username, password)
+            status, response = login_user(PORT, username, password)
 
             if status == 200 and "access_token" in response:
                 return "LOGGED_IN"
@@ -136,7 +133,7 @@ class Handler(AbstractHandler):
             if not token:
                 return "INVALID_TOKEN"
 
-            status, _ = logout_user(port, token)
+            status, _ = logout_user(PORT, token)
             if status == 200:
                 return "LOGGED_OUT"
             else:
@@ -145,7 +142,7 @@ class Handler(AbstractHandler):
         elif label.name == 'register':
             username = label.parameters[0].value
             password = label.parameters[1].value
-            status, _ = register_user(port, username, password)
+            status, _ = register_user(PORT, username, password)
             if status == 200:
                 return "USER_REGISTERED"
             elif status == 403:
