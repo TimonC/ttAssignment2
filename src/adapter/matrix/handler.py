@@ -99,7 +99,7 @@ class Handler(AbstractHandler):
             Label(Sort.RESPONSE, 'invalid_register', 'synapse'),
             Label(Sort.RESPONSE, 'invalid_login', 'synapse'),
             Label(Sort.RESPONSE, 'invalid_logout', 'synapse'),
-            Label(Sort.RESPONSE, 'shut_off', 'synapse');
+            Label(Sort.RESPONSE, 'shut_off', 'synapse')
         ]
 
     def default_configuration(self) -> Configuration:
