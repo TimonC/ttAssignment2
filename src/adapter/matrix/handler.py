@@ -3,8 +3,6 @@ import time
 import http.client
 import subprocess
 from datetime import datetime
-import os
-
 from generic.api import label_pb2
 from generic.api.configuration import ConfigurationItem, Configuration
 from generic.api.label import Label, Sort
