@@ -65,7 +65,6 @@ class Handler(AbstractHandler):
 
     def stop(self):
         logging.info('Stopping Handler - FORCE')
-        os._exit(0)  # Force exit
 
     def stimulate(self, pb_label: label_pb2.Label):
         label = Label.decode(pb_label)
