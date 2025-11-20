@@ -62,7 +62,7 @@ class Handler(AbstractHandler):
         subprocess.run(["src/ttAssignment1/setup_homeserver.sh"], check=True)
 
     def stop(self):
-        logging.info('Stopping Handler - FORCE')
+        logging.info('Stopping Handler')
 
     def stimulate(self, pb_label: label_pb2.Label):
         label = Label.decode(pb_label)
