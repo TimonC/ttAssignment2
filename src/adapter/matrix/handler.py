@@ -78,28 +78,28 @@ class Handler(AbstractHandler):
 
     def supported_labels(self):
         return [
-            Label(Sort.STIMULUS, 'reset'),
-            Label(Sort.STIMULUS, 'register',parameters=[
+            Label(Sort.STIMULUS, 'reset', 'synapse'),
+            Label(Sort.STIMULUS, 'register', 'synapse', parameters=[
                 Parameter('username', Type.STRING),
                 Parameter('password', Type.STRING)
             ]),
-            Label(Sort.STIMULUS, 'login',parameters=[
+            Label(Sort.STIMULUS, 'login', 'synapse', parameters=[
                 Parameter('username', Type.STRING),
                 Parameter('password', Type.STRING)
             ]),
-            Label(Sort.STIMULUS, 'logout',parameters=[
+            Label(Sort.STIMULUS, 'logout', 'synapse', parameters=[
                 Parameter('session_token', Type.STRING)
             ]),
-            Label(Sort.RESPONSE, 'logged_in',parameters=[
+            Label(Sort.RESPONSE, 'logged_in', 'synapse', parameters=[
                 Parameter('session_token', Type.STRING)
             ]),
-            Label(Sort.RESPONSE, 'user_registered'),
-            Label(Sort.RESPONSE, 'logged_out'),
-            Label(Sort.RESPONSE, 'incorrect_login'),
-            Label(Sort.RESPONSE, 'invalid_register'),
-            Label(Sort.RESPONSE, 'invalid_login'),
-            Label(Sort.RESPONSE, 'invalid_logout'),
-            Label(Sort.RESPONSE, 'shut_off');
+            Label(Sort.RESPONSE, 'user_registered', 'synapse'),
+            Label(Sort.RESPONSE, 'logged_out', 'synapse'),
+            Label(Sort.RESPONSE, 'incorrect_login', 'synapse'),
+            Label(Sort.RESPONSE, 'invalid_register', 'synapse'),
+            Label(Sort.RESPONSE, 'invalid_login', 'synapse'),
+            Label(Sort.RESPONSE, 'invalid_logout', 'synapse'),
+            Label(Sort.RESPONSE, 'shut_off', 'synapse');
         ]
 
     def default_configuration(self) -> Configuration:
