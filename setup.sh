@@ -1,4 +1,4 @@
 #!/bin/bash
 python3 -m venv venv
 source venv/bin/activate
-pip install websocket-client~=1.8.0 protobuf sphinx~=8.2.3 sphinx-rtd-theme
+pip install websocket-client~=1.8.0 protobuf
